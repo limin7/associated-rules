@@ -213,7 +213,7 @@ Neo4j Community Edition 3.5.5.
 APOC version 3.5.0.2
 
 ### Sample Database: Meetup
-
+https://www.icloud.com/iclouddrive/0eetcYikeuYaz5ff3LakCPIuQ#meetup.graphdb.tar
 You can download it from this repository. After download, unzip it to a folder and update neo4j.conf to point to it: 
 
 dbms.active_database=meetup.graphdb
@@ -297,9 +297,9 @@ The graph below shows the ARItem nodes and how they are connected:
 
 We have created a sandbox for you to try out this procedure. Please follow the details below: 
 
-Host:
-User:
-Code: 
+Host:http://47.103.214.111:7474/browser/
+User:neo4j
+Password:123
 
 ## Feedback & Comments
 
