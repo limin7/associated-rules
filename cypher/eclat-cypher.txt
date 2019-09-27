@@ -1,0 +1,69 @@
+// ===================================================================
+// 
+// Cypher scripts to test ECLAT algorithm based on Meetup dataset.
+// 
+// All Rights Reserved, 2019
+// 
+
+// Create Index before creating data
+
+CREATE INDEX ON :ARItem(id)
+
+// Find item sets: Topics that are used buy same Group
+
+MATCH (g:Group) -[:HAS_TOPIC]-> (t:Topic)
+WHERE size((g) -[:HOSTED_EVENT]-> (:Event)) > 10
+WITH g, t ORDER BY id(g), id(t)
+WITH g, collect(id(t)) AS itemSet
+RETURN  itemSet
+
+
+
+// Run the ECLAT algorithm
+
+CALL com.mypackage.eclat('MATCH (g:Group) -[:HAS_TOPIC]-> (t:Topic) WHERE size((g) -[:HOSTED_EVENT]-> (:Event)) > 10 WITH g, t ORDER BY id(g), id(t) WITH g, collect(id(t)) AS itemSet RETURN  itemSet', 0.01, true)
+
+
+// Utility: delete all nodes
+CALL apoc.periodic.commit('MATCH (a:ARItem) WITH a LIMIT $limit DETACH DELETE a RETURN count(*)',{limit:200})
+
+
+// 
+// Test: use generated associated rules as recommendations
+
+// What are top 10 related keywords of Data Science? 
+
+MATCH (a:ARItem{title:'Data Science'}) -[r:ASSOCIATES_WITH]-> ()
+WHERE r.level = size(a.id) + 1
+WITH r ORDER BY r.confidence DESC LIMIT 10
+MATCH (a1:ARItem) WHERE a1.id = r.assocItemIds
+RETURN a1.title, a1.id, r.confidence
+
+// Any bag of words. Update the list at first line with any words / topics 
+// to find out what's recommended.
+
+WITH ['Data Science','Hadoop','NoSQL', 'Data Mining'] AS keywords
+UNWIND keywords AS k	
+// search for id of each keyword
+MATCH (a:ARItem{title:k})
+WITH apoc.coll.flatten(collect(a.id)) AS ids
+// match ARItem node which has identical collection of ids
+WITH apoc.coll.sort(ids) AS itemSetId
+MATCH (a1:ARItem{id:itemSetId}) -[r:ASSOCIATES_WITH]-> ()
+WHERE r.level = size(a1.id) + 1
+// search for associated single word and sort them by confidence
+WITH r ORDER BY r.confidence DESC LIMIT 10
+MATCH (a2:ARItem) WHERE a2.id = r.assocItemIds
+RETURN a2.title, a2.id, r.confidence, size((a2)-->()) AS degree
+ORDER BY r.confidence DESC, degree DESC
+
+
+
+
+
+
+
+
+
+
+
